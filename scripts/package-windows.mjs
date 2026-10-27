@@ -149,6 +149,7 @@ try {
 if (!nodeLicense.includes('Node.js') || !nodeLicense.includes('Permission'))
   throw new Error('Invalid Node.js license response');
 const notices = [
+  `OfficeBridge (MIT)\n${await readFile(join(root, 'LICENSE'), 'utf8')}`,
   `Node.js ${process.versions.node}\nSource: ${nodeLicenseUrl}\n${nodeLicense}`,
 ];
 for (const [name, license] of [
