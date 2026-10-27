@@ -1,0 +1,11 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OfficeBridgeLoad">
+  <ribbon>
+    <tabs>
+      <tab id="OfficeBridgeTab" label="OfficeBridge">
+        <group id="OfficeBridgeGroup" label="办公桥">
+          <button id="OfficeBridgeOpen" label="打开办公桥" size="large" onAction="OfficeBridgeOpen" />
+        </group>
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

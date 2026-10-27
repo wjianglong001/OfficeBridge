@@ -1,0 +1,41 @@
+{
+  "name": "office-bridge",
+  "version": "0.12.8",
+  "private": true,
+  "description": "Connect local AI agents to office applications.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "wps:prepare": "node scripts/prepare-wps.mjs",
+    "predev": "npm run wps:prepare",
+    "dev": "tsx watch apps/bridge/src/index.ts",
+    "prebuild": "npm run wps:prepare",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-assets.mjs",
+    "start": "node dist/apps/bridge/src/index.js",
+    "package:win": "npm run build && node scripts/package-windows.mjs",
+    "test:exe": "node scripts/smoke-windows.mjs",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run wps:prepare",
+    "test": "tsx --test tests/bridge.test.ts tests/protocol.test.ts tests/analysis.test.ts tests/codex.test.ts tests/table.test.ts tests/actions.test.ts tests/workbuddy.test.ts tests/doubao.test.ts tests/on-demand.test.ts tests/scope-navigation.test.ts tests/continuation.test.ts tests/execution.test.ts tests/agent-diagnostics.test.ts tests/doubao-connection.test.ts tests/run-watchdog.test.ts tests/wps-bootstrap.test.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run typecheck && npm test && npm run format:check",
+    "package:wps": "npm run package:win && node scripts/package-wps-native.mjs",
+    "test:wps-package": "node scripts/smoke-wps-native.mjs && node scripts/verify-wps-native.mjs"
+  },
+  "overrides": {
+    "tmp": "^0.2.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.2",
+    "esbuild": "^0.28.2",
+    "postject": "^1.0.0-alpha.6",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "wpsjs": "2.2.3"
+  }
+}

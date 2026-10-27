@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  padding: 22px 18px;
+  font:
+    14px/1.6 system-ui,
+    sans-serif;
+  color: #17372c;
+  background: #f7faf7;
+}
+h1 {
+  font-size: 20px;
+}
+.note {
+  color: #63786e;
+  font-size: 12px;
+}
+button {
+  padding: 10px 16px;
+  border: 1px solid #35745a;
+  border-radius: 8px;
+  background: white;
+  color: #235a43;
+  cursor: pointer;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 14px;
+  background: white;
+  border-radius: 8px;
+}
+button:disabled {
+  opacity: 0.5;
+}

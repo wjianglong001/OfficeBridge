@@ -1,0 +1,8 @@
+node_modules
+dist
+release
+coverage
+package-lock.json
+.officebridge
+apps/wps-addin/.generated
+packages/agents/vendor/doubao-cli/*.mjs

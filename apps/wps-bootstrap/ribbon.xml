@@ -1,0 +1,3 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OfficeBridgeNativeLoad">
+  <ribbon><tabs><tab id="OfficeBridgeNativeTab" label="办公桥"><group id="OfficeBridgeNativeGroup" label="办公桥"><button id="OfficeBridgeNativeOpen" label="打开办公桥" size="large" onAction="OfficeBridgeNativeOpen" /></group></tab></tabs></ribbon>
+</customUI>

@@ -1,0 +1,94 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #f7faf8;
+  color: #17372e;
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.launcher {
+  max-width: 390px;
+  margin: 15vh auto 0;
+  padding: 24px;
+}
+h1 {
+  margin: 0 0 26px;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.status-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+#status {
+  margin: 0;
+  font-weight: 600;
+}
+.indicator {
+  flex: 0 0 17px;
+  height: 17px;
+  margin-top: 3px;
+  border: 2px solid #d4e3dc;
+  border-top-color: #2f7660;
+  border-radius: 50%;
+  animation: rotate 0.9s linear infinite;
+}
+.hint {
+  margin: 9px 0 24px 28px;
+  color: #687e75;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-left: 28px;
+}
+button {
+  min-width: 72px;
+  min-height: 36px;
+  padding: 6px 18px;
+  border: 1px solid #2f7660;
+  border-radius: 8px;
+  background: #2f7660;
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+button:hover {
+  background: #25634f;
+}
+button.secondary {
+  background: transparent;
+  color: #456759;
+  border-color: #c5d6cd;
+}
+button.secondary:hover {
+  background: #eaf2ed;
+}
+button:focus-visible {
+  outline: 3px solid #92baa7;
+  outline-offset: 3px;
+}
+[hidden] {
+  display: none !important;
+}
+.launcher[data-state='error'] .indicator,
+.launcher[data-state='cancelled'] .indicator {
+  border-color: #a6b9ae;
+  animation: none;
+}
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    animation: none;
+  }
+}

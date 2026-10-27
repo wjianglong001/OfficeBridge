@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>办公桥 · XLL 验证</title>
+    <link rel="stylesheet" href="probe.css" />
+    <script src="/wps/host.js" defer></script>
+    <script src="/wps/contract.js" defer></script>
+    <script src="/wps/host-operations.js" defer></script>
+    <script src="/wps/executor.js" defer></script>
+    <script src="probe.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>办公桥</h1>
+      <p id="status" role="status">正在连接表格…</p>
+      <p class="note">XLL 最小验证 · 只读取临时测试表，不连接 AI</p>
+      <button id="read">读取当前选区</button>
+      <p id="range"></p>
+      <pre id="values"></pre>
+    </main>
+  </body>
+</html>

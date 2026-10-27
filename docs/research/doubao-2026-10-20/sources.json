@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "title": "飞书官网：豆包工作的入口、自定义连接器与权限边界。",
+    "url": "https://www.feishu.cn/content/article/7677519271848610746",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 2,
+    "title": "草料开放平台：豆包工作自定义 HTTP/Streamable HTTP 连接器配置。",
+    "url": "https://cli.im/open-api/agent/open-platform-mcp/doubao-work.html",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 3,
+    "title": "ChassyChan：Windows Doubao Desktop Gateway README。实验项目，作者称在单台 Windows、豆包 2.31.4 上做过有限实测；明确列出未验证能力。",
+    "url": "https://github.com/ChassyChan/codex-doubao-desktop-gateway",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 4,
+    "title": "同项目 server.mjs：创建任务、指定会话续聊、等待 run、读取消息等接口的实际包装代码。",
+    "url": "https://raw.githubusercontent.com/ChassyChan/codex-doubao-desktop-gateway/main/src/server.mjs",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 5,
+    "title": "同项目 install-windows.ps1：固定上游 revision 并应用补丁。仅阅读，未运行。",
+    "url": "https://raw.githubusercontent.com/ChassyChan/codex-doubao-desktop-gateway/main/scripts/install-windows.ps1",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 6,
+    "title": "同项目 Windows patch：数据目录、进程检测、退出和启动适配。仅阅读，未应用；包含强制结束进程的回退，不应直接照搬。",
+    "url": "https://raw.githubusercontent.com/ChassyChan/codex-doubao-desktop-gateway/main/patches/doubao-cli-windows.patch",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 7,
+    "title": "Fullstop000/doubao-cli README：原生会话标识、按 run 等待、停止、MCP 参数和平台限制。上游声明桌面 macOS 支持，不能单独作为 Windows 支持证明。",
+    "url": "https://github.com/Fullstop000/doubao-cli",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 8,
+    "title": "豆包开放平台首页：Skill、Plugin、OpenAPI 的方向和内测状态。仅能支持平台介绍，不足以证明公开的桌面账号会话调用协议。",
+    "url": "https://open.doubao.com/",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 9,
+    "title": "MediaClaw 自家接入说明：通过自定义 STDIO 连接器连接本地插件、人工配对的产品案例；不用于证明 OfficeBridge 已兼容。",
+    "url": "https://mediaclaw.app/features/doubao-integration",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 10,
+    "title": "Patsnap 自家接入指南：HTTP 连接器、工具发现、本地工作任务选择及其实测边界。明确其截图为 macOS，不能作为 Windows 端到端调用验收。",
+    "url": "https://open.zhihuiya.com/devportal/integrations/doubao",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  },
+  {
+    "id": 11,
+    "title": "doubao-cli protocol.mjs：在已认证的客户端渲染进程内提交协议请求的实现。非官方协议，未在本机执行。",
+    "url": "https://raw.githubusercontent.com/Fullstop000/doubao-cli/main/src/protocol.mjs",
+    "accessed_at": "2026-10-20",
+    "approved": true,
+    "evidence_type": "primary"
+  }
+]

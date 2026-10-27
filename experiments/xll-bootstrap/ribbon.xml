@@ -1,0 +1,3 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="OfficeBridgeProbeLoad">
+  <ribbon><tabs><tab id="OfficeBridgeXllProbeTab" label="办公桥验证"><group id="OfficeBridgeXllProbeGroup" label="XLL 最小验证"><button id="OfficeBridgeXllProbeOpen" label="打开验证侧栏" size="large" onAction="OfficeBridgeProbeOpen" /></group></tab></tabs></ribbon>
+</customUI>

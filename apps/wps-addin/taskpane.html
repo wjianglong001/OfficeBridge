@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OfficeBridge · 办公桥</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./host.js" defer></script>
+    <script src="./contract.js" defer></script>
+    <script src="./host-operations.js" defer></script>
+    <script src="./executor.js" defer></script>
+    <script src="./taskpane.js" defer></script>
+  </head>
+  <body>
+    <main class="chat-app">
+      <header class="chat-header">
+        <h1>办公桥</h1>
+        <span
+          id="agent-status"
+          class="agent-status"
+          data-state="connecting"
+          aria-busy="true"
+          aria-label="正在连接 Codex"
+          title="正在连接 Codex"
+          ><span class="status-dot" aria-hidden="true"></span
+          ><span id="agent-name">Codex</span
+          ><span id="agent-state">连接中</span></span
+        >
+        <details id="options-menu" class="popover options-menu">
+          <summary class="icon-button" aria-label="更多操作" title="更多操作">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5" cy="12" r="1.5"></circle>
+              <circle cx="12" cy="12" r="1.5"></circle>
+              <circle cx="19" cy="12" r="1.5"></circle>
+            </svg>
+          </summary>
+          <div class="menu-panel">
+            <label for="agent-selector">使用 Agent</label>
+            <select id="agent-selector">
+              <option value="codex">Codex</option>
+              <option value="workbuddy">WorkBuddy</option>
+              <option value="doubao">豆包（实验）</option>
+            </select>
+            <button id="new-chat" type="button">新对话</button>
+            <button id="undo-changes" type="button" disabled>
+              恢复上次修改
+            </button>
+            <button id="recovery-record" type="button" disabled>
+              查看恢复记录
+            </button>
+            <button id="check-agent" type="button">重新连接</button>
+            <details class="connection-details">
+              <summary>连接与范围说明</summary>
+              <p id="bridge-status">正在连接本地服务…</p>
+              <p>
+                每次数据最多 512 KB。模型使用所选 Agent
+                已有配置，数据可能交给云端处理。
+              </p>
+              <p>修改后不会自动保存文件。恢复记录和对话只保留在本侧栏。</p>
+            </details>
+          </div>
+        </details>
+      </header>
+      <div
+        id="messages"
+        class="messages"
+        role="log"
+        aria-label="与办公桥的对话"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
+        <div id="empty-state" class="empty-state">
+          <p>选中数据，或直接提问。</p>
+        </div>
+      </div>
+      <footer class="composer-dock">
+        <div
+          id="connection-notice"
+          class="connection-notice"
+          data-state="working"
+        >
+          <span class="connection-spinner" aria-hidden="true"></span>
+          <div
+            id="connection-message"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <div id="connection-text">正在连接 Codex…</div>
+            <div id="connection-hint">可先输入，连接完成后发送。</div>
+          </div>
+          <div class="connection-actions">
+            <button id="retry-connection" type="button" hidden>重试</button>
+            <button id="cancel-connection" type="button" hidden>取消</button>
+          </div>
+        </div>
+        <form id="analysis-form" class="composer">
+          <label for="analysis-prompt" class="sr-only">给办公桥发送消息</label>
+          <textarea
+            id="analysis-prompt"
+            rows="2"
+            maxlength="4000"
+            placeholder="描述你想做的事…"
+            aria-describedby="connection-message"
+            required
+          ></textarea>
+          <div class="composer-bar">
+            <div
+              id="selection-context"
+              class="selection-context"
+              role="status"
+              aria-live="polite"
+              title="随消息提供选区数据，AI 可按需补充读取"
+            >
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4M8 8h4v4H8z"
+                ></path>
+              </svg>
+              <span id="selection-summary">正在识别选区…</span>
+            </div>
+            <div class="send-controls">
+              <button
+                id="analyze"
+                type="submit"
+                class="send-button"
+                aria-label="发送消息"
+                title="发送（Enter）"
+                disabled
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 19V5m-6 6 6-6 6 6"></path>
+                </svg>
+              </button>
+              <button
+                id="cancel-analysis"
+                type="button"
+                class="send-button"
+                aria-label="停止生成"
+                title="停止生成"
+                hidden
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </footer>
+    </main>
+  </body>
+</html>

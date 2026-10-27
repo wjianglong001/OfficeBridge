@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>办公桥</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./launcher.js" defer></script>
+  </head>
+  <body>
+    <main
+      id="launcher"
+      class="launcher"
+      data-state="working"
+      aria-labelledby="title"
+    >
+      <h1 id="title">办公桥</h1>
+      <div class="status-line">
+        <span class="indicator" aria-hidden="true"></span>
+        <p id="status" role="status" aria-live="polite" aria-atomic="true">
+          正在连接办公桥…
+        </p>
+      </div>
+      <p id="hint" class="hint">请稍候。</p>
+      <div class="actions">
+        <button id="retry" type="button" hidden>重试</button>
+        <button id="cancel" type="button" class="secondary">取消</button>
+      </div>
+    </main>
+  </body>
+</html>
