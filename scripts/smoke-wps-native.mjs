@@ -59,10 +59,10 @@ const entries = JSON.parse(
 assert.deepEqual(
   entries.sort(),
   [
-    'OfficeBridge/OfficeBridge.xll',
-    'OfficeBridge/OfficeBridgeService.exe',
-    'OfficeBridge/THIRD-PARTY-NOTICES.txt',
-    'OfficeBridge/使用说明.txt',
+    'WPS/OfficeBridgeWPS.xll',
+    'WPS/OfficeBridgeService.exe',
+    'WPS/THIRD-PARTY-NOTICES.txt',
+    'WPS/使用说明.txt',
   ].sort(),
 );
 
@@ -143,7 +143,12 @@ try {
       signal: AbortSignal.timeout(1500),
     });
     assert.equal(response.status, 200, path);
-    assert.ok((await response.text()).length > 20, path);
+    const body = await response.text();
+    assert.ok(body.length > 20, path);
+    if (path === 'taskpane.html') {
+      assert.match(body, /<option value="doubao">豆包<\/option>/);
+      assert.doesNotMatch(body, /豆包（实验）/);
+    }
   }
   assert.equal((await fetch(base + '/wps/../../package.json')).status, 404);
   assert.equal(

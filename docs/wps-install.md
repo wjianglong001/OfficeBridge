@@ -1,16 +1,16 @@
 # 在 Windows WPS 中安装 OfficeBridge
 
-当前版本 0.12.8 提供 WPS 原生入口，以及原有 exe / npm 安装方式。完整原生包的自动启动和 Agent 实机验收仍在进行，不把独立测试或开发者直接启动的后台当作已通过。
+当前版本 0.12.9 提供 WPS 原生入口，以及原有 exe / npm 安装方式。完整原生包的自动启动和 Agent 实机验收仍在进行，不把独立测试或开发者直接启动的后台当作已通过。
 
 ## WPS 原生入口
 
-1. 完整解压 `release/wps-native/OfficeBridge-WPS-0.12.8.zip`，保留整个 `OfficeBridge` 文件夹；不要只复制 XLL。
-2. 在 WPS 表格进入 **工具 → 加载项 → 浏览**，选择 `OfficeBridge.xll`，勾选并确定。构建目录中的路径是 `release/wps-native/0.12.8/OfficeBridge/OfficeBridge.xll`。这里使用普通“加载项”，不是“COM 加载项”。
+1. 完整解压 `release/wps/OfficeBridge-WPS-0.12.9.zip`，保留整个 `WPS` 文件夹；不要只复制 XLL。
+2. 在 WPS 表格进入 **工具 → 加载项 → 浏览**，选择 `OfficeBridgeWPS.xll`，勾选并确定。构建目录中的路径是 `release/wps/0.12.9/WPS/OfficeBridgeWPS.xll`。这里使用普通“加载项”，不是“COM 加载项”。
 3. 如出现 `OfficeBridgeNative` 的“信任并安装”提示，由用户确认；取消后不自动重试。
 4. 原生入口核验同目录 `OfficeBridgeService.exe`，通过普通进程创建启动后台，健康检查通过后打开完整侧栏；兼容后台已运行时可复用。也可从 **办公桥 → 打开办公桥** 进入。
 5. 打开自己的工作簿，在侧栏直接提问；完整包不再限制临时测试表。涉及修改时，先查看预览，再点击 **应用**。
 
-无需寻找额外启动脚本或安装 Node.js/npm。`OfficeBridge.xll` 和 `OfficeBridgeService.exe` 必须留在同一版本目录。系统拒绝启动时显示真实错误码，不使用 `OAAssist.ShellExecute` 或进程代理重试。关闭 WPS 不保证独立后台退出，使用期间不要移动或删除目录。
+无需寻找额外启动脚本或安装 Node.js/npm。`OfficeBridgeWPS.xll` 和 `OfficeBridgeService.exe` 必须留在同一版本目录。系统拒绝启动时显示真实错误码，不使用 `OAAssist.ShellExecute` 或进程代理重试。关闭 WPS 不保证独立后台退出，使用期间不要移动或删除目录。
 
 更新时选择新版本目录中的 XLL，先在加载项管理中取消旧 XLL 并确认；不要覆盖正在加载的文件。保存文档后重新打开 WPS，可加载新的在线启动页。完整升级、卸载和会话恢复仍需单独验收。
 
@@ -47,7 +47,7 @@ npm run dev
 
 点击右下角发送，或按 Enter；Shift+Enter 换行。分析回复、修改方案与执行结果都在同一对话里，只有点击 **应用** 后才写入并回读。多步骤任务可在成功应用后自动继续同一 Agent 会话，新的修改仍需再次应用；失败、放弃或停止时不续办。
 
-右上角可选择 Codex、WorkBuddy 或豆包（实验），也可新建对话、重新连接及恢复最近一次应用。切换 Agent 创建新会话，失败保留原对话。Agent 需自行安装、登录；打开侧栏只做连接准备，发送与自动续办才使用模型额度。详见 [表格操作规格](table-operations.md) 和 [Agent 接入](codex-analysis.md)。
+右上角可选择 Codex、WorkBuddy 或豆包，也可新建对话、重新连接及恢复最近一次应用。切换 Agent 创建新会话，失败保留原对话。Agent 需自行安装、登录；打开侧栏只做连接准备，发送与自动续办才使用模型额度。详见 [表格操作规格](table-operations.md) 和 [Agent 接入](codex-analysis.md)。
 
 恢复记录只存于当前侧栏内存，关闭侧栏后不保证恢复，不自动保存工作簿。应用前须核对文件和目标范围。
 
@@ -63,7 +63,7 @@ npm run dev
 
 ## 停用与卸载
 
-原生入口可在普通加载项管理中取消勾选 `OfficeBridge.xll`；停用不保证独立后台同步退出，完整卸载流程仍待验收。不要在运行期间删除版本目录。
+原生入口可在普通加载项管理中取消勾选 `OfficeBridgeWPS.xll`；停用不保证独立后台同步退出，完整卸载流程仍待验收。不要在运行期间删除版本目录。
 
 exe / npm 的 JS 加载项保持原有卸载方式：服务运行时打开安装页，点击 OfficeBridge 行的 **卸载**，再重新打开 WPS。该页面只管理对应的 OfficeBridge JS 加载项，不能当作已卸载原生入口或后台。
 

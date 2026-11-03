@@ -194,7 +194,7 @@ await writeFile(
       '2. 浏览器自动打开 WPS 安装页，在 OfficeBridge 行点击安装，确认 WPS 信任提示。',
       '3. 保存文件后重开 WPS 表格，从 OfficeBridge 选项卡打开办公桥。',
       '4. 保持 OfficeBridge 窗口运行；关闭窗口或按 Ctrl+C 停止服务。',
-      '5. 侧栏右上角可选择 Codex / WorkBuddy / 豆包（实验）；请先在所选 Agent 中登录。切换 Agent 会开启新对话。',
+      '5. 侧栏右上角可选择 Codex / WorkBuddy / 豆包；请先在所选 Agent 中登录。切换 Agent 会开启新对话。',
       '',
       '已安装过加载项时，启动程序后即可直接在 WPS 中使用。',
       '默认地址：http://127.0.0.1:4318/wps/install.html',

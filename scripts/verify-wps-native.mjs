@@ -25,7 +25,7 @@ const info = JSON.parse(
   ),
 );
 const temporary = await mkdtemp(join(tmpdir(), 'OfficeBridge 完整引导测试 '));
-const xll = join(temporary, 'OfficeBridge.xll');
+const xll = join(temporary, 'OfficeBridgeWPS.xll');
 const runtime = join(temporary, 'OfficeBridgeService.exe');
 const protectedPorts = new Set([4318, 43191, 43192, 58890, 58891]);
 const protectedPids = new Set([0, 4, 30900, process.pid]);

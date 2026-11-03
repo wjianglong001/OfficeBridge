@@ -1,6 +1,6 @@
 {
   "name": "office-bridge",
-  "version": "0.12.8",
+  "version": "0.12.9",
   "private": true,
   "license": "MIT",
   "description": "Connect local AI agents to office applications.",

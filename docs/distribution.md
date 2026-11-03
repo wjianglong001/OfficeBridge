@@ -2,7 +2,7 @@
 
 ## 交付范围
 
-当前版本 0.12.8 提供 WPS 原生入口包、独立 exe 和 npm 三个入口。独立 `OfficeBridge.exe` 内置 Node.js、桥接代码和 WPS 静态资源，无需安装 Node.js、npm 或下载源码。开发者继续使用 `npm run dev`，也可 `npm run build` 后 `npm start`。
+当前版本 0.12.9 提供 WPS 原生入口包、独立 exe 和 npm 三个入口。独立 `OfficeBridge.exe` 内置 Node.js、桥接代码和 WPS 静态资源，无需安装 Node.js、npm 或下载源码。开发者继续使用 `npm run dev`，也可 `npm run build` 后 `npm start`。
 
 这些入口使用同一份服务和端口（默认 4318）。exe 默认打开 WPS 安装页面，窗口提示保持运行；关闭窗口或 Ctrl+C 停止服务。加载项安装仍由用户在页面点击完成，不自动修改 WPS 配置。此版是带控制台的便携程序，不是安装向导或托盘程序。
 
@@ -10,17 +10,17 @@
 
 ## WPS 原生入口包
 
-产物为 `release/wps-native/OfficeBridge-WPS-0.12.8.zip`，构建目录为 `release/wps-native/0.12.8/OfficeBridge/`：
+产物为 `release/wps/OfficeBridge-WPS-0.12.9.zip`，构建目录为 `release/wps/0.12.9/WPS/`：
 
 ```text
-OfficeBridge/
-  OfficeBridge.xll
+WPS/
+  OfficeBridgeWPS.xll
   OfficeBridgeService.exe
   THIRD-PARTY-NOTICES.txt
   使用说明.txt
 ```
 
-用户先完整解压，再在 WPS 表格的 **工具 → 加载项 → 浏览** 选择 `OfficeBridge.xll`，无需单独打开 exe 或脚本；同目录后台必须保留。如 WPS 提示信任并安装，由用户确认。该原生包匹配本次验证的 Windows x64 与 32 位 WPS 表格。
+用户先完整解压，再在 WPS 表格的 **工具 → 加载项 → 浏览** 选择 `OfficeBridgeWPS.xll`，无需单独打开 exe 或脚本；同目录后台必须保留。如 WPS 提示信任并安装，由用户确认。该原生包匹配本次验证的 Windows x64 与 32 位 WPS 表格。
 
 XLL 在 WPS 内运行本机引导线程，监听 `127.0.0.1:43192`。完整后台单独运行于 `127.0.0.1:4318`：启动前核验同目录固定文件的 SHA-256，用普通 `CreateProcessW` 创建 `OfficeBridgeService.exe`，不经 `OAAssist.ShellExecute`、命令解释器或其他进程代理。参数固定，不从表格或 Agent 回复接收可执行路径。健康检查确认服务身份和协议后才打开完整对话侧栏，表格仍由 WPS 执行器操作。
 
@@ -29,6 +29,8 @@ XLL 在 WPS 内运行本机引导线程，监听 `127.0.0.1:43192`。完整后�
 原生包后台以 Windows GUI 子系统运行，内嵌与独立 exe 相同的完整桥接功能和资源。构建只改变副本的 PE 子系统字段，并以修改后的文件计算哈希；不覆盖原独立 exe。每个版本输出到独立目录，不覆盖当前加载的旧 XLL 或运行中的后台。新版本目录隔离不等于会话或服务自动升级，已有服务是否复用仍按健康检查判断。
 
 ## 打包约定
+
+正式发行包从 [GitHub Releases](https://github.com/wjianglong001/OfficeBridge/releases/latest) 下载。本地 `release/wps/` 按宿主分层，ZIP 内使用 `WPS/` 目录，入口为 `OfficeBridgeWPS.xll`；Microsoft Excel 适配将独立分发，当前 WPS XLL 不能作为 Excel 加载项使用。
 
 使用 Node.js 官方 Single Executable Application（SEA）、esbuild 和 postject。在 Windows x64、Node.js 24 LTS 上运行 `npm ci`、`npm run package:win`，生成 `release/OfficeBridge.exe` 和 SHA-256 校验文件。只打包列出的加载项资源，不能包含工作区、用户数据、Agent 配置或凭证。
 
@@ -48,6 +50,12 @@ npm run test:wps-package
 ```
 
 `package:wps` 先生成完整 exe，再调用 `scripts/package-wps-native.mjs`。直接调用该脚本要求已有 `release/OfficeBridge.exe`；编译器可用 `--zig <zig.exe>` 指定，默认查找项目内 Zig 0.13 工具目录。ZIP 只打包上述四个文件，不扫入输出目录中的其他文件；后台及 cJSON 的许可证随包提供并内嵌 XLL。构建不加载 WPS、重启已有服务或发送模型请求。
+
+## GitHub Release
+
+更新 `package.json`、`package-lock.json` 版本和安装说明，并新增 `docs/releases/v<版本>.md`。提交源码后推送同版本标签（例如 `v0.12.9`），`.github/workflows/release.yml` 会在 Windows 上执行项目检查、exe 打包与独立运行检查，再用校验过的 Zig 0.13.0 构建 WPS 包并验证。全部通过后发布 ZIP 与 `SHA256SUMS.txt`；失败时不会发布 Release。发布流程不调用真实 Agent。
+
+GitHub 自动附加的 Source code 压缩包仅用于开发；安装时下载 `OfficeBridge-WPS-<版本>.zip`。校验文件记录发行 ZIP 的 SHA-256，不包含用户配置、工作簿或构建时的临时认证信息。
 
 ## 验收
 

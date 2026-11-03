@@ -49,5 +49,5 @@ export const plannedAgents = [
   { id: 'claude-code', name: 'Claude Code', status: 'not_implemented' },
   { id: 'dsh', name: 'DSH', status: 'not_implemented' },
   { id: 'workbuddy', name: 'WorkBuddy', status: 'not_implemented' },
-  { id: 'doubao', name: '豆包（实验）', status: 'not_implemented' },
+  { id: 'doubao', name: '豆包', status: 'not_implemented' },
 ] as const;

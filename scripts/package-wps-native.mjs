@@ -19,7 +19,7 @@ if (process.platform !== 'win32' || process.arch !== 'x64')
 const root = fileURLToPath(new URL('../', import.meta.url));
 const source = join(root, 'experiments/xll-bootstrap');
 const staging = join(root, '.officebridge/wps-native');
-const distribution = join(root, 'release/wps-native');
+const distribution = join(root, 'release/wps');
 const args = process.argv.slice(2);
 let zig = join(
   root,
@@ -41,7 +41,7 @@ if (
 )
   throw new Error('Invalid package version for the archive filename.');
 // Versioned output never replaces a loaded XLL or running portable service.
-const release = join(distribution, version, 'OfficeBridge');
+const release = join(distribution, version, 'WPS');
 const protocolSource = await readFile(
   join(root, 'packages/protocol/src/index.ts'),
   'utf8',
@@ -240,7 +240,7 @@ const run = (parameters) =>
     windowsHide: true,
     stdio: 'inherit',
   });
-const xll = join(release, 'OfficeBridge.xll');
+const xll = join(release, 'OfficeBridgeWPS.xll');
 try {
   await regular(xll);
 } catch (error) {
@@ -297,17 +297,18 @@ await replaceOwnFile(
     [
       '办公桥 · WPS 原生加载项（Windows x64 / WPS 表格32位）',
       '',
-      '1. 先完整解压压缩包，保持 OfficeBridge 文件夹内文件在一起，不要只复制 XLL。',
-      '2. WPS 表格 → 工具 → 加载项 → 浏览，选择本文件夹的 OfficeBridge.xll，勾选并确定。',
+      '1. 先完整解压压缩包，保持 WPS 文件夹内文件在一起，不要只复制 XLL。',
+      '2. WPS 表格 → 工具 → 加载项 → 浏览，选择本文件夹的 OfficeBridgeWPS.xll，勾选并确定。',
       '3. 如出现 WPS 的“信任并安装”，由你确认；取消后不会自动重试。',
       '4. 办公桥将启动本文件夹的 OfficeBridgeService.exe，并在 WPS 内打开完整侧栏。无需单独双击后台或安装 Node.js/npm。',
       '5. 直接打开自己的表格并选中需要的数据，在侧栏对话；没有选区时由 Agent 按需定位读取。',
-      '6. 在侧栏选择已安装、已登录的 Codex、WorkBuddy 或豆包（实验）；启动连接检查不会发送模型请求。',
+      '6. 在侧栏选择已安装、已登录的 Codex、WorkBuddy 或豆包；启动连接检查不会发送模型请求。',
       '7. 分析直接返回；修改先预览，只有点击“应用”后才写入，可按现有能力恢复最近一次修改。',
       '8. 不要删除或移动正在使用的文件夹。WPS 退出不保证独立后台同步退出。',
       '',
       '默认后台仅监听 http://127.0.0.1:4318；引导仅监听 http://127.0.0.1:43192。',
       '端口被其他程序占用、后台身份不匹配，或系统拒绝启动时明确显示原因及错误码；不关闭其他程序，不自动换端口，不自动重试。',
+      '此包仅供 WPS 表格使用，不是 Microsoft Excel 加载项。',
       '此包尚未配置代码签名；WPS 实机安装、后台启动和真实 Agent 操作需单独验收。',
       '发布时保留 THIRD-PARTY-NOTICES.txt。开发者仍可按项目原有 npm 方式运行。',
       '',
@@ -332,9 +333,9 @@ const compression = [
   'Add-Type -AssemblyName System.IO.Compression.FileSystem',
   '$archive = [System.IO.Compression.ZipFile]::Open($env:OFFICEBRIDGE_NATIVE_ZIP_TARGET, [System.IO.Compression.ZipArchiveMode]::Create)',
   'try {',
-  '  foreach ($name in @("OfficeBridge.xll", "OfficeBridgeService.exe", "THIRD-PARTY-NOTICES.txt", "使用说明.txt")) {',
+  '  foreach ($name in @("OfficeBridgeWPS.xll", "OfficeBridgeService.exe", "THIRD-PARTY-NOTICES.txt", "使用说明.txt")) {',
   '    $source = [System.IO.Path]::Combine($env:OFFICEBRIDGE_NATIVE_ZIP_SOURCE, $name)',
-  '    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $source, ("OfficeBridge/" + $name), [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null',
+  '    [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $source, ("WPS/" + $name), [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null',
   '  }',
   '} finally { $archive.Dispose() }',
 ].join('\n');
@@ -365,8 +366,6 @@ try {
 await replaceOwnFile(
   join(distribution, 'SHA256SUMS.txt'),
   [
-    `${sha256}  ${version}/OfficeBridge/OfficeBridge.xll`,
-    `${backendSha256}  ${version}/OfficeBridge/OfficeBridgeService.exe`,
     `${createHash('sha256')
       .update(await readFile(archive))
       .digest('hex')}  ${archive.slice(distribution.length + 1)}`,

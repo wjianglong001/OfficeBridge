@@ -1,0 +1,65 @@
+name: Release WPS
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Verify version and release notes
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Tag must match package.json version.' }
+          if (!(Test-Path "docs/releases/v$version.md")) { throw 'Missing release notes.' }
+      - run: npm ci
+      - run: npm run check
+      - run: npm run package:win
+      - run: npm run test:exe
+      - name: Install Zig 0.13.0
+        shell: pwsh
+        run: |
+          $toolchains = Join-Path $PWD '.officebridge/toolchains'
+          New-Item -ItemType Directory -Force -Path $toolchains | Out-Null
+          $archive = Join-Path $toolchains 'zig-0.13.0.zip'
+          Invoke-WebRequest 'https://ziglang.org/download/0.13.0/zig-windows-x86_64-0.13.0.zip' -OutFile $archive
+          $expected = 'd859994725ef9402381e557c60bb57497215682e355204d754ee3df75ee3c158'
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Zig archive checksum mismatch.' }
+          Expand-Archive -LiteralPath $archive -DestinationPath $toolchains
+      - run: node scripts/package-wps-native.mjs
+      - run: npm run test:wps-package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OfficeBridge-WPS-${{ github.ref_name }}
+          path: |
+            release/wps/*.zip
+            release/wps/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          gh release create $env:GITHUB_REF_NAME --verify-tag --title "OfficeBridge v$version · WPS" --notes-file "docs/releases/v$version.md" --latest "release/wps/OfficeBridge-WPS-$version.zip" 'release/wps/SHA256SUMS.txt'
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub Release publication failed.' }
