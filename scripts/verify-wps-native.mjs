@@ -24,7 +24,12 @@ const info = JSON.parse(
     'utf8',
   ),
 );
-const temporary = await mkdtemp(join(tmpdir(), 'OfficeBridge 完整引导测试 '));
+// Hosted Windows runners expose TEMP through an 8.3 alias (RUNNER~1).
+// The native launcher deliberately rejects aliases; use the actual path for
+// this successful-launch check rather than weakening production validation.
+const temporary = await mkdtemp(
+  join(await realpath(tmpdir()), 'OfficeBridge 完整引导测试 '),
+);
 const xll = join(temporary, 'OfficeBridgeWPS.xll');
 const runtime = join(temporary, 'OfficeBridgeService.exe');
 const protectedPorts = new Set([4318, 43191, 43192, 58890, 58891]);
@@ -327,12 +332,14 @@ try {
   // Never spawn the service here: only the native /start implementation may do it.
   startRequested = true;
   const queued = await post({ retry: false });
+  const queuedBody = await queued.json();
   assert.equal(
     queued.status,
     202,
-    'Native start must acknowledge a queued thread.',
+    'Native start must acknowledge a queued thread: ' +
+      JSON.stringify(queuedBody),
   );
-  assert.deepEqual(await queued.json(), { state: 'starting' });
+  assert.deepEqual(queuedBody, { state: 'starting' });
   for (const retry of [false, true]) {
     const duplicate = await post({ retry });
     const body = await duplicate.json();
