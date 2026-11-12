@@ -4,11 +4,13 @@
 
 OfficeBridge 是一个直接呈现在表格软件中的 AI 表格处理工具。发送消息时附带当前选区数据，由 Agent 判断是否足以完成任务；数据不够或没有选区时，再按需读取当前工作簿中的相关数据。所有修改先预览再应用。
 
+AI 回复支持 Markdown 排版，包括标题、列表、表格、引用和代码块，生成过程中同步显示；宽表格和长代码可横向滚动。
+
 处理对象可以小到某一个单元格，也可以是一行、一列、一块区域、一张工作表，或整个工作簿。**处理哪里，由用户决定。**
 
 首个宿主是 Windows WPS 表格，后续计划适配 Microsoft Excel。OfficeBridge 连接用户本地的 AI Agent，由 Agent 理解需求和规划操作，由表格宿主提供实际的读写能力。
 
-> 当前版本为 0.12.9。新增 WPS 原生入口包，完整解压后在 WPS 普通“加载项”中选择 XLL，可进入完整办公桥启动流程；原生验证包的侧栏与选区读取已由用户确认，完整后台自动启动及真实 Agent 操作仍需单独实机验收。单元格修改参数在宿主执行前预检，公式漏写等号等错误会返回具体字段，Agent 可在同一轮有限纠正；不自动补等号或放宽公式安全规则。图表排序参数的依赖错误在进入宿主前提示，允许 Agent 在同一轮有限纠正，不再因此使读取失效；普通图表沿用源数据行序，分组排序须显式指定汇总模式。任务根据真实进展判断超时，WorkBuddy 持续思考或准备工具时不再被 120 秒总时限误中断；仍保留无响应与总时长上限。读取参数在进入宿主前预检，允许 Agent 在本轮有限修正；投影数据单独保留原范围尺寸。表格工具失败会展示首次真实错误并停止本轮，保留已应用的前一步；WorkBuddy 的 429 提示不再暗示积分不足。在侧栏选择豆包即可连接，无需单独运行脚本：未运行时自动启动；已运行但接口未开启时，在侧栏确认“重启并连接”，取消则保持原 Agent 对话。所有主动表格操作统一经后台执行模块调度，聊天只展示进度、方案和结果。统计、检查、清洗、方案校验和图表计算在 Worker 中运行；宿主分段读取数据，修改先预览再应用。侧栏直接显示实时选区，完整选区值随消息提供，由 Agent 判断并补充取数。支持 Codex、WorkBuddy 和豆包 Windows 接入，共用 17 个工具，保留 512 KB 体积预算。验证边界见 [表格操作说明](docs/table-operations.md)。
+> 当前本地测试版本为 0.12.10，包含豆包云端接口兼容改进、处理耗时明细和 Markdown 渲染，尚未发布到 GitHub。新增 WPS 原生入口包，完整解压后在 WPS 普通“加载项”中选择 XLL，可进入完整办公桥启动流程；原生验证包的侧栏与选区读取已由用户确认，完整后台自动启动及真实 Agent 操作仍需单独实机验收。单元格修改参数在宿主执行前预检，公式漏写等号等错误会返回具体字段，Agent 可在同一轮有限纠正；不自动补等号或放宽公式安全规则。图表排序参数的依赖错误在进入宿主前提示，允许 Agent 在同一轮有限纠正，不再因此使读取失效；普通图表沿用源数据行序，分组排序须显式指定汇总模式。任务根据真实进展判断超时，WorkBuddy 持续思考或准备工具时不再被 120 秒总时限误中断；仍保留无响应与总时长上限。读取参数在进入宿主前预检，允许 Agent 在本轮有限修正；投影数据单独保留原范围尺寸。表格工具失败会展示首次真实错误并停止本轮，保留已应用的前一步；WorkBuddy 的 429 提示不再暗示积分不足。在侧栏选择豆包即可连接，无需单独运行脚本：未运行时自动启动；已运行但接口未开启时，在侧栏确认“重启并连接”，取消则保持原 Agent 对话。所有主动表格操作统一经后台执行模块调度，聊天只展示进度、方案和结果。统计、检查、清洗、方案校验和图表计算在 Worker 中运行；宿主分段读取数据，修改先预览再应用。侧栏直接显示实时选区，完整选区值随消息提供，由 Agent 判断并补充取数。支持 Codex、WorkBuddy 和豆包 Windows 接入，共用 17 个工具，保留 512 KB 体积预算。验证边界见 [表格操作说明](docs/table-operations.md)。
 
 ## 核心体验：直接提问，按需定位
 
@@ -101,7 +103,7 @@ OfficeBridge 是一个直接呈现在表格软件中的 AI 表格处理工具。
 
 ### 方式一：在 WPS 中选择原生加载项
 
-从 [GitHub Releases](https://github.com/wjianglong001/OfficeBridge/releases/latest) 下载 `OfficeBridge-WPS-0.12.9.zip` 并完整解压，保持 `WPS` 文件夹中的 XLL、`OfficeBridgeService.exe` 和许可文件在一起。在 WPS 表格进入 **工具 → 加载项 → 浏览**，选择 `OfficeBridgeWPS.xll`，勾选并确定；使用普通“加载项”，不要选择“COM 加载项”。构建目录中的对应文件为 [OfficeBridgeWPS.xll](release/wps/0.12.9/WPS/OfficeBridgeWPS.xll)。
+从 [GitHub Releases](https://github.com/wjianglong001/OfficeBridge/releases/latest) 下载 `OfficeBridge-WPS-0.12.9.zip` 并完整解压，保持 `WPS` 文件夹中的 XLL、`OfficeBridgeService.exe` 和许可文件在一起。在 WPS 表格进入 **工具 → 加载项 → 浏览**，选择 `OfficeBridgeWPS.xll`，勾选并确定；使用普通“加载项”，不要选择“COM 加载项”。构建目录中的对应文件为 [OfficeBridgeWPS.xll](release/wps/0.12.10/WPS/OfficeBridgeWPS.xll)。
 
 如出现 WPS 的“信任并安装”，由用户确认。原生入口核验同目录后台后，通过普通进程创建启动固定的 `OfficeBridgeService.exe`，健康检查通过后打开完整侧栏；无需另找启动脚本或安装 Node.js/npm。已运行的兼容后台可直接复用。该流程不使用 `OAAssist.ShellExecute`，系统拒绝启动时显示真实错误码，不自动重试。
 
@@ -240,7 +242,7 @@ npm run package:wps
 npm run test:wps-package
 ```
 
-需要本机 Zig 0.13；可向 `scripts/package-wps-native.mjs` 传入 `--zig <zig.exe>`。当前版本目录为 `release/wps/0.12.9/WPS/`，压缩包只包含固定发行文件，不包含用户工作簿或 Agent 配置；新版本不会覆盖旧版本目录。
+需要本机 Zig 0.13；可向 `scripts/package-wps-native.mjs` 传入 `--zig <zig.exe>`。当前版本目录为 `release/wps/0.12.10/WPS/`，压缩包只包含固定发行文件，不包含用户工作簿或 Agent 配置；新版本不会覆盖旧版本目录。
 
 exe、GUI 后台和原生 API 的独立检查不等于真实 WPS 或模型端到端验证。更多约定见 [分发说明](docs/distribution.md)。
 

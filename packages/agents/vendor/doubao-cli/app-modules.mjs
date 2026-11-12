@@ -31,4 +31,12 @@ export function appModule(req, kind) {
   return req(Number(matches[0][0]));
 }
 
-export const APP_MODULE_BOOTSTRAP = `const appModule = ${appModule.toString()};`;
+// Desktop 2.35.8 renamed the webpack chunk registry. Keep the two observed
+// names explicit; never scan or execute unrelated window globals.
+export function desktopChunks() {
+  const chunks = [window['@flow-web/desktop:stable'], window['chunk_@flow-web/desktop']].find(value => typeof value?.push === 'function');
+  if (typeof chunks?.push !== 'function') throw new Error('Doubao desktop module registry is unavailable');
+  return chunks;
+}
+
+export const APP_MODULE_BOOTSTRAP = `const appModule = ${appModule.toString()}; const desktopChunks = ${desktopChunks.toString()};`;

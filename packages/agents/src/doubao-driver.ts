@@ -18,7 +18,12 @@ export interface DoubaoDriver {
   send(
     message: string,
     conversationId?: string,
-  ): Promise<{ conversationId: string; runId: string; text: string }>;
+  ): Promise<{
+    conversationId: string;
+    runId: string;
+    text: string;
+    readbackMs?: number;
+  }>;
   cancel(): Promise<boolean>;
   close(): void;
 }
@@ -30,7 +35,10 @@ export type DoubaoRpc = Pick<
 const identityExpression = `(() => {
   if (!['doubao:', 'chrome:'].includes(location.protocol) || location.hostname !== 'doubao-chat' || !/^\\/chat(?:\\/|$)/.test(location.pathname)) return null;
   const account = localStorage.getItem('flow_tea_user_id');
-  if (!account || account === '0' || !window.neotix?.taskMode?.runtime?.queryRuntimeInfo || typeof window['@flow-web/desktop:stable']?.push !== 'function') return null;
+  if (!account || account === '0') return { error: 'not_logged_in' };
+  if (typeof fetch !== 'function' || typeof TextDecoder !== 'function' ||
+    typeof AbortController !== 'function' || typeof AbortSignal?.timeout !== 'function')
+    return { error: 'runtime_unavailable' };
   return { account };
 })()`;
 
@@ -57,10 +65,12 @@ export const doubaoCloudContext = Object.freeze({
 
 async function fingerprint(client: DoubaoRpc) {
   const identity = await client.evaluate(identityExpression);
-  if (!identity || typeof identity.account !== 'string' || !identity.account)
+  if (identity?.error === 'runtime_unavailable')
     throw new DoubaoSetupError(
-      '请在豆包主窗口登录，并打开支持工作会话的客户端版本。',
+      '豆包客户端缺少请求或流式读取能力，请更新客户端后重新连接。',
     );
+  if (!identity || typeof identity.account !== 'string' || !identity.account)
+    throw new DoubaoSetupError('请打开豆包主对话窗口并完成登录，再重新连接。');
   return createHash('sha256').update(identity.account).digest('hex');
 }
 
@@ -85,6 +95,7 @@ class NativeDoubaoDriver implements DoubaoDriver {
   }
 
   private async completedReply(runId: string) {
+    const started = performance.now();
     await this.identity();
     if (!this.nativeId || !/^\d{12,24}$/.test(runId))
       throw new Error('native_reply_not_confirmed');
@@ -109,6 +120,7 @@ class NativeDoubaoDriver implements DoubaoDriver {
       conversationId: this.nativeId,
       runId,
       text: stored.reply.text,
+      readbackMs: Math.round(performance.now() - started),
     };
   }
 
@@ -247,7 +259,7 @@ export async function connectDoubao(
     if (error instanceof DoubaoDiscoveryError)
       throw new DoubaoSetupError(error.message);
     throw new DoubaoSetupError(
-      '豆包本机接口未就绪或版本不兼容。请在豆包中登录并打开主窗口，再在侧栏重新连接。',
+      '豆包接口参数读取失败或客户端协议不兼容。请打开豆包主窗口后重新连接，持续失败时需检查客户端适配。',
     );
   }
 }

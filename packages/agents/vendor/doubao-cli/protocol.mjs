@@ -64,8 +64,17 @@ export async function runtimeParameters(client, { timeoutMs = 10_000 } = {}) {
     if (!entry) throw new Error('Doubao runtime parameters are not ready; open a chat and retry');
     const source = new URL(entry.name).searchParams;
     const params = Object.fromEntries(keys.filter(key => source.has(key)).map(key => [key, source.get(key)]));
-    const runtime = await window.neotix.taskMode.runtime.queryRuntimeInfo({ env: true });
-    return { params, clientEnvId: runtime?.env?.environmentId || '' };
+    // The native client environment id is stored separately from a sandbox.
+    // Cloud conversations need no provisioning or persistent initialization.
+    let clientEnvId = '';
+    const storage = window.neotix?.runtimeStorage;
+    if (typeof storage?.get === 'function') {
+      const raw = await storage.get('general-agent:client-env-id');
+      const value = raw && typeof raw === 'object' && typeof raw.isOK === 'boolean'
+        ? (raw.isOK ? raw.data : undefined) : raw;
+      if (typeof value === 'string' && value.trim()) clientEnvId = value;
+    }
+    return { params, clientEnvId, accountId: localStorage.getItem('flow_tea_user_id') };
   `;
   const runtime = await evaluateWithWatchdog(client, `(async () => {
     const keys = ['aid', 'real_aid', 'channel', 'chromium_version', 'client_platform',
@@ -374,7 +383,7 @@ const SEND_EXPRESSION = `(async () => {
                 // already-loaded chunk ids and the runtime callback would
                 // never fire again.
                 const req = await new Promise((res) => {
-                  window['@flow-web/desktop:stable'].push([['probe_rec_' + crypto.randomUUID()], {}, (r) => res(r)]);
+                  desktopChunks().push([['probe_rec_' + crypto.randomUUID()], {}, (r) => res(r)]);
                 });
                 step('require');
                 // Bind the sandbox route to the real conversation id. The bus

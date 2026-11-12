@@ -280,6 +280,7 @@ export class DoubaoAdapter implements AgentAdapter {
       };
       for (let round = 0; round < 8; round++) {
         if (controller.signal.aborted) throw new Error('cancelled');
+        const roundStarted = performance.now();
         nativeSettled = false;
         nativeConfirmed = false;
         const pending = session.driver
@@ -310,6 +311,19 @@ export class DoubaoAdapter implements AgentAdapter {
         session.nativeId = result.conversationId;
         nativeRuns.add(result.runId);
         nativeConfirmed = true;
+        yield {
+          type: 'timing',
+          phase: 'native_round',
+          round: round + 1,
+          durationMs: Math.round(performance.now() - roundStarted),
+        };
+        if (typeof result.readbackMs === 'number')
+          yield {
+            type: 'timing',
+            phase: 'native_readback',
+            round: round + 1,
+            durationMs: result.readbackMs,
+          };
         let frame: any;
         try {
           frame = parseDoubaoFrame(result.text, requestId);
@@ -365,11 +379,19 @@ export class DoubaoAdapter implements AgentAdapter {
         count += frame.calls.length;
         if (count > 32) throw new Error('tool_limit');
         const results = [];
-        for (const call of frame.calls)
+        for (const call of frame.calls) {
+          const toolStarted = performance.now();
           results.push({
             name: call.name,
             result: await task.run(call.name, call.arguments),
           });
+          yield {
+            type: 'timing',
+            phase: 'table_tool',
+            round: round + 1,
+            durationMs: Math.round(performance.now() - toolStarted),
+          };
+        }
         message = { type: 'tool_results', untrustedData: true, results };
         yield { type: 'status', message: '豆包正在处理表格…' };
       }

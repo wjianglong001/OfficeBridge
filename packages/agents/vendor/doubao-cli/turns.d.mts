@@ -8,3 +8,8 @@ export function stopTurn(
   conversationId: string,
   options?: any,
 ): Promise<any>;
+export function terminateNativeTask(
+  client: any,
+  threadId: string,
+  deadline: number,
+): Promise<any>;

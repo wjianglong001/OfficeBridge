@@ -4,9 +4,22 @@ import { createHash } from 'node:crypto';
 import { currentApp, activeProfile } from './app.mjs';
 import { runtimeParameters, evaluateWithWatchdog, updateLiveControls, sendChatCompletion } from './protocol.mjs';
 import { configDirectory } from './config.mjs';
-import { APP_MODULE_BOOTSTRAP } from './app-modules.mjs';
 
 function webIdentityGuard(runtime) {
+  if (currentApp().id === 'doubao') {
+    if (!runtime.accountId || runtime.accountId === '0') throw new Error('Doubao account identity is unavailable');
+    return {
+      setup: `const assertDesktopIdentity = () => {
+        if (!['doubao:', 'chrome:'].includes(location.protocol) || location.hostname !== 'doubao-chat'
+          || !/^\\/chat(?:\\/|$)/.test(location.pathname)
+          || localStorage.getItem('flow_tea_user_id') !== ${JSON.stringify(runtime.accountId)}) {
+          throw Object.assign(new Error('Doubao account or page changed'), { code: 'desktop_identity_changed' });
+        }
+      };`,
+      check: 'assertDesktopIdentity();',
+      rethrow: "if (error.code === 'desktop_identity_changed') throw error;",
+    };
+  }
   if (currentApp().id !== 'web') return { setup: '', check: '', rethrow: '' };
   const accountId = currentApp().accountId || runtime.accountId;
   if (!accountId || accountId === '0') throw new Error('Doubao Web account identity is unavailable; sign in and retry');
@@ -109,6 +122,20 @@ export async function imRequest(client, route, cmd, key, body, timeoutMs = 10000
     if (result.status_code) throw new Error('Doubao task lookup failed: ' + result.status_desc);
     return result.downlink_body;
   })()`, timeoutMs + 1000);
+}
+
+// Shared signed request path for desktop and web. Does not load webpack modules.
+export async function terminateNativeTask(client, threadId, deadline) {
+  threadId = String(threadId);
+  if (!/^[1-9]\d{11,23}$/u.test(threadId)) throw new Error('Task cancellation has an invalid thread id');
+  const runtime = await runtimeParameters(webObservationClient(client), {
+    timeoutMs: webRequestBudget(deadline),
+  });
+  // Preserve the server's numeric id exactly, including values beyond 2^53.
+  const body = `{"thread_id":${threadId}}`;
+  return webJsonRequest(client, runtime,
+    'https://www.doubao.com/alice/generaltask/terminate?' + runtime.query,
+    body, 'application/json', 'Task cancellation failed', deadline);
 }
 
 const parse = value => { try { return typeof value === 'string' ? JSON.parse(value) : value || {}; } catch { return {}; } };
@@ -508,24 +535,9 @@ export async function stopTurn(client, conversationId, options = {}) {
         || stopped.has(node.threadId) || failed.has(node.threadId)) continue;
       try {
         const timeout = remaining(deadline);
-        const result = client.terminateTask ? await client.terminateTask(node.threadId, timeout) : web
-          ? await (async () => {
-            const requestDeadline = Math.min(deadline, Date.now() + timeout);
-            const runtime = await runtimeParameters(webObservationClient(client), { timeoutMs: timeout });
-            const { query } = runtime;
-            const threadId = String(node.threadId);
-            if (!/^[1-9]\d{11,23}$/u.test(threadId)) throw new Error('Web task cancellation has an invalid thread id');
-            // The endpoint requires a JSON number. Keep the validated decimal
-            // digits as source text so IDs above MAX_SAFE_INTEGER aren't rounded.
-            const body = `{"thread_id":${threadId}}`;
-            return webJsonRequest(client, runtime, 'https://www.doubao.com/alice/generaltask/terminate?' + query,
-              body, 'application/json', 'Web task cancellation failed', requestDeadline);
-          })()
-          : await evaluateWithWatchdog(client, `(async () => {
-          const req = await new Promise(resolve => window['@flow-web/desktop:stable'].push([['doubao_stop_' + crypto.randomUUID()], {}, resolve]));
-          ${APP_MODULE_BOOTSTRAP}
-          return appModule(req, 'skills').iv.AGWTaskTerminate({ thread_id: ${JSON.stringify(node.threadId)} });
-        })()`, timeout + 1000);
+        const result = client.terminateTask
+          ? await client.terminateTask(node.threadId, timeout)
+          : await terminateNativeTask(client, node.threadId, Math.min(deadline, Date.now() + timeout));
         if (result.code !== 0) throw new Error(web ? 'Web task cancellation was rejected' : 'Task cancellation rejected: ' + (result.message || result.msg || result.code));
         stopped.add(node.threadId);
         receipt.cancellation.accepted = true; options.onReceipt?.(receipt);

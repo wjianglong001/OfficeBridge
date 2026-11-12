@@ -1,4 +1,5 @@
 export * from '../../packages/protocol/src/table.js';
+export { renderMarkdown } from './markdown.js';
 export * from '../../packages/protocol/src/on-demand.js';
 export * from '../../packages/protocol/src/continuation.js';
 export { executeComputation } from '../../packages/agents/src/execution.js';

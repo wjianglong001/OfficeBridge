@@ -149,6 +149,25 @@
     message.state.textContent = text;
     message.state.className = 'message-state' + (kind ? ' ' + kind : '');
   }
+  function renderMessage(message) {
+    clearTimeout(message.renderTimer);
+    message.renderTimer = null;
+    message.body.className = 'message-body markdown-body';
+    message.body.innerHTML = C.renderMarkdown(message.rawText);
+  }
+  function setMessageText(message, text) {
+    message.rawText = text;
+    renderMessage(message);
+  }
+  function appendMessageText(message, text) {
+    message.rawText += text;
+    if (message.renderTimer !== null) return;
+    message.renderTimer = setTimeout(function () {
+      var follow = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80;
+      renderMessage(message);
+      if (follow) scrollBottom();
+    }, 80);
+  }
   function addMessage(role, text, target) {
     empty.hidden = true;
     var node = document.createElement('article');
@@ -169,7 +188,16 @@
     node.appendChild(status);
     feed.appendChild(node);
     scrollBottom();
-    return { node: node, body: body, state: status, scope: label };
+    var message = {
+      node: node,
+      body: body,
+      state: status,
+      scope: label,
+      rawText: text,
+      renderTimer: null,
+    };
+    if (role === 'assistant') renderMessage(message);
+    return message;
   }
   function controls() {
     var busy =
@@ -864,6 +892,8 @@
     var proposalSnapshot = null,
       hostQueue = Promise.resolve(),
       timings = {},
+      timingList = null,
+      clickedAt = Date.now(),
       submittedAt = 0;
     function showTimings() {
       message.state.title = Object.keys(timings)
@@ -871,6 +901,24 @@
           return k + '：' + timings[k] + ' ms';
         })
         .join('；');
+      if (timingList)
+        timingList.textContent = Object.keys(timings)
+          .map(function (k) {
+            return k + '：' + timings[k] + ' ms';
+          })
+          .join('\n');
+    }
+    function showTimingDetails() {
+      if (timingList) return;
+      var details = document.createElement('details');
+      details.className = 'change-details';
+      var summary = document.createElement('summary');
+      summary.textContent = '处理耗时';
+      details.appendChild(summary);
+      timingList = document.createElement('div');
+      timingList.className = 'change-item';
+      details.appendChild(timingList);
+      message.node.appendChild(details);
     }
     async function hostRequest(item) {
       if (active.signal.aborted) return;
@@ -982,7 +1030,26 @@
           timings['Agent首条文本'] = Date.now() - submittedAt;
           showTimings();
         }
-        message.body.textContent += item.text;
+        appendMessageText(message, item.text);
+      } else if (item.type === 'timing') {
+        var phaseLabel = {
+          native_round: '豆包往返（含回读）',
+          native_readback: '其中完整回复回读',
+          table_tool: '表格工具往返合计',
+        }[item.phase];
+        if (
+          phaseLabel &&
+          Number.isInteger(item.round) &&
+          item.round >= 1 &&
+          item.round <= 8 &&
+          Number.isFinite(item.durationMs) &&
+          item.durationMs >= 0
+        ) {
+          var key = '第 ' + item.round + ' 轮 · ' + phaseLabel;
+          timings[key] = (timings[key] || 0) + item.durationMs;
+          showTimingDetails();
+          showTimings();
+        }
       } else if (item.type === 'host_request') {
         hostQueue = hostQueue
           .then(function () {
@@ -1088,7 +1155,7 @@
         if (failure.error === 'conversation_lost') markConversationLost();
         throw new Error(failure.message || '请求失败，请重试。');
       }
-      timings['本地服务接收'] = Date.now() - submittedAt;
+      timings['本地服务响应头'] = Date.now() - submittedAt;
       showTimings();
       state(message, '已发送，等待 ' + agentName() + ' 回复…', 'working');
       if (response.body && response.body.getReader) {
@@ -1117,7 +1184,7 @@
       if (active.signal.aborted) throw new Error(hostFailure || '任务已停止。');
       if (question) {
         proposal = null;
-        message.body.textContent = question.question;
+        setMessageText(message, question.question);
         var choices = document.createElement('div');
         choices.className = 'message-actions scope-choices';
         var record = { node: choices };
@@ -1143,6 +1210,7 @@
         message.node.appendChild(choices);
         state(message, '请选择，也可以直接输入补充说明。');
       } else if (proposal) {
+        var prepareStarted = Date.now();
         var execution = await OfficeBridgeExecutor.prepare(
           proposalSnapshot,
           proposal,
@@ -1154,6 +1222,7 @@
           },
         );
         if (active.signal.aborted) throw new Error('任务已停止。');
+        timings['方案校验与预览准备'] = Date.now() - prepareStarted;
         renderPlan(
           proposal,
           proposalSnapshot,
@@ -1184,8 +1253,7 @@
         dataDetails.appendChild(sources);
         message.node.appendChild(dataDetails);
       }
-      if (!message.body.textContent && !proposal)
-        message.body.textContent = '已完成。';
+      if (!message.rawText && !proposal) setMessageText(message, '已完成。');
     } catch (error) {
       if (automatic) revokeContinuation(automatic);
       var stopped = active.signal.aborted && !hostFailure;
@@ -1207,6 +1275,9 @@
         stopped ? '' : 'error',
       );
     } finally {
+      timings['本轮总耗时（应用前）'] = Date.now() - clickedAt;
+      showTimings();
+      renderMessage(message);
       if (snapshot && terminal === 'complete' && !active.signal.aborted)
         lastRangeContext = host.navigationContext() || lastRangeContext;
       if (snapshot)

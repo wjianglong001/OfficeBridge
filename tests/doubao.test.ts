@@ -17,6 +17,12 @@ import {
   findDoubaoTarget,
 } from '../packages/agents/src/doubao-cdp.js';
 import { fullSelection } from './fixtures.js';
+import { withApp } from '../packages/agents/vendor/doubao-cli/app.mjs';
+import { runtimeParameters } from '../packages/agents/vendor/doubao-cli/protocol.mjs';
+import {
+  terminateNativeTask,
+  stopTurn,
+} from '../packages/agents/vendor/doubao-cli/turns.mjs';
 import { loadWpsHost } from './wps-fixture.js';
 
 test('Doubao receives complete selection data on its first native message and can finish without redundant tools or warnings', async () => {
@@ -160,6 +166,18 @@ test('Doubao structured requests await on-demand host results without sending ho
     assert.deepEqual(proposal.continuation, { nextStep: '创建图表' });
     assert.ok(proposal.snapshot);
     assert.equal(calls, 2);
+    const metrics = events.filter((e) => e.type === 'timing');
+    assert.equal(metrics.filter((e) => e.phase === 'native_round').length, 3);
+    assert.equal(metrics.filter((e) => e.phase === 'table_tool').length, 3);
+    for (const metric of metrics) {
+      assert.deepEqual(Object.keys(metric).sort(), [
+        'durationMs',
+        'phase',
+        'round',
+        'type',
+      ]);
+      assert.ok(Number.isFinite(metric.durationMs) && metric.durationMs >= 0);
+    }
     model.host.apply(proposal.plan);
     assert.equal(model.sheets[0].Cells.Item(2, 2).Value2, 50);
     model.host.undo();
@@ -1186,6 +1204,7 @@ test('native Doubao uses the exact completed stored reply when the stream is inc
   const driver = await connectDoubao({ client: renderer });
   const reply = await driver.send('read full reply');
   assert.equal(reply.text, renderer.persistedReply);
+  assert.ok(Number.isFinite(reply.readbackMs) && reply.readbackMs! >= 0);
   assert.equal(parseDoubaoFrame(reply.text, 'stored').type, 'final');
   renderer.storedRunMismatch = true;
   await assert.rejects(
@@ -1233,7 +1252,187 @@ test('bundling preserves the native protocol functions injected into the rendere
       Buffer.from(output.outputFiles[0]!.text).toString('base64')
   );
   const renderer = new Renderer();
+  renderer.sandbox['chunk_@flow-web/desktop'] =
+    renderer.sandbox['@flow-web/desktop:stable'];
+  delete renderer.sandbox['@flow-web/desktop:stable'];
   const driver = await bundled.connectDoubao({ client: renderer });
   assert.equal((await driver.send('bundle verification')).text, 'native reply');
   driver.close();
+});
+
+test('native identity distinguishes unlogged accounts and missing request capabilities', async () => {
+  for (const mode of ['missing-fetch', 'unlogged']) {
+    const renderer = new Renderer();
+    if (mode === 'missing-fetch') delete renderer.sandbox.fetch;
+    else renderer.account = '0';
+    await assert.rejects(
+      connectDoubao({ client: renderer }),
+      mode === 'unlogged' ? /登录/ : /请求或流式读取能力/,
+    );
+    assert.equal(renderer.bodies.length, 0);
+    assert.equal(renderer.lookups.length, 0);
+  }
+});
+
+test('cloud send and reply verification survive renamed or absent module registries and sandbox APIs', async () => {
+  for (const mode of ['renamed', 'absent']) {
+    const renderer = new Renderer();
+    delete renderer.sandbox['@flow-web/desktop:stable'];
+    delete renderer.sandbox.neotix;
+    if (mode === 'renamed')
+      Object.defineProperty(renderer.sandbox, 'future_registry', {
+        get() {
+          throw new Error('Unrelated globals must not be inspected');
+        },
+      });
+    const driver = await connectDoubao({ client: renderer });
+    const reply = await driver.send('synthetic task');
+    assert.equal(reply.text, renderer.persistedReply);
+    assert.equal(renderer.lookups.length, 1);
+    driver.close();
+  }
+});
+
+const testApp = { id: 'doubao', name: 'Doubao', aid: '582478' };
+test('runtime identity reads native storage without provisioning or using sandbox identity', async () => {
+  for (const raw of [
+    'native-id',
+    { isOK: true, data: 'native-id' },
+    { isOK: false },
+    null,
+  ]) {
+    const renderer = new Renderer();
+    renderer.sandbox.neotix.runtimeStorage = {
+      get: async (key: string) => {
+        assert.equal(key, 'general-agent:client-env-id');
+        return raw;
+      },
+      set: () => {
+        throw new Error('No persistent initialization allowed');
+      },
+    };
+    renderer.sandbox.neotix.taskMode.runtime.queryRuntimeInfo = () => {
+      throw new Error('Sandbox query must not run');
+    };
+    const runtime = await withApp(testApp, () => runtimeParameters(renderer));
+    assert.equal(
+      runtime.clientEnvId,
+      raw === 'native-id' || (raw && typeof raw === 'object' && 'data' in raw)
+        ? 'native-id'
+        : '',
+    );
+  }
+});
+
+test('desktop cancellation uses signed request with exact numeric ids and bounded failures', async () => {
+  const renderer = new Renderer();
+  delete renderer.sandbox['@flow-web/desktop:stable'];
+  let count = 0;
+  renderer.sandbox.fetch = async (url: string, options: any) => {
+    count++;
+    assert.equal(new URL(url).pathname, '/alice/generaltask/terminate');
+    assert.equal(options.body, '{"thread_id":7333333333333333333}');
+    assert.equal(options.credentials, 'include');
+    assert.ok(options.signal);
+    return Response.json({ code: 0 });
+  };
+  const stop = (id = '7333333333333333333', deadline = Date.now() + 1000) =>
+    withApp(testApp, () => terminateNativeTask(renderer, id, deadline));
+  assert.equal((await stop()).code, 0);
+  await assert.rejects(stop('invalid'), /invalid thread/);
+  await assert.rejects(stop(undefined, Date.now() - 1), /deadline/);
+  assert.equal(count, 1);
+  renderer.sandbox.fetch = async () => new Response('', { status: 503 });
+  await assert.rejects(stop(), /HTTP 503/);
+  renderer.sandbox.fetch = async () => {
+    renderer.account = 'changed';
+    return Response.json({ code: 0 });
+  };
+  await assert.rejects(stop(), /account or page changed/);
+});
+
+test('normal stopTurn verifies owned task terminal state after HTTP cancellation without modules', async () => {
+  const renderer = new Renderer();
+  delete renderer.sandbox['@flow-web/desktop:stable'];
+  const conversationId = '7111111111111',
+    runId = '8111111111111',
+    threadId = '7333333333333333333';
+  let terminated = false,
+    breaks = 0,
+    terminations = 0,
+    terminalReads = 0;
+  const client = Object.assign(renderer, {
+    followTaskStreams: async () => {},
+    imRequest: async (route: string, _cmd: number, _key: string, body: any) => {
+      if (route === 'conversation/batch_get') {
+        assert.deepEqual(body.conversation_id, [conversationId]);
+        return {
+          batch_get_conv_info_downlink_body: {
+            conversation_info_list: [
+              {
+                conversation_id: conversationId,
+                conversation_type: 1,
+                messages: [
+                  { user_type: 1, message_id: runId },
+                  {
+                    user_type: 2,
+                    message_id: '9111111111111',
+                    bot_reply_message_id: runId,
+                    ext: { is_finish: '1' },
+                  },
+                ],
+              },
+            ],
+          },
+        };
+      }
+      if (route === 'thread/info') {
+        assert.equal(body.thread_id, threadId);
+        if (terminated) terminalReads++;
+        return {
+          get_thread_info_downlink_body: {
+            thread_info: {
+              source_conversation_id: conversationId,
+              ext: { thread_status: terminated ? 'cancelled' : 'running' },
+            },
+          },
+        };
+      }
+      if (route === 'chain/thread_message')
+        return {
+          pull_thread_message_chain_downlink_body: {
+            messages: [],
+            has_more: false,
+          },
+        };
+      assert.equal(route, 'message/break_stream_msg');
+      assert.equal(body.reply_msg_id, runId);
+      assert.equal(body.conversation_id, conversationId);
+      breaks++;
+      return {};
+    },
+  });
+  renderer.sandbox.fetch = async (url: string, options: any) => {
+    assert.equal(new URL(url).pathname, '/alice/generaltask/terminate');
+    assert.equal(options.body, '{"thread_id":7333333333333333333}');
+    terminations++;
+    terminated = true;
+    return Response.json({ code: 0 });
+  };
+  const result = await withApp(testApp, () =>
+    stopTurn(client, conversationId, {
+      runId,
+      timeoutMs: 1000,
+      receipt: {
+        runId,
+        conversationId,
+        handoffs: [{ threadId, taskId: 'synthetic', completed: true }],
+      },
+    }),
+  );
+  assert.equal(result.stopped, true);
+  assert.equal(result.tasks.cancelled, 1);
+  assert.equal(breaks, 1);
+  assert.equal(terminations, 1);
+  assert.ok(terminalReads >= 1);
 });

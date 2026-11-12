@@ -20,6 +20,12 @@ export interface AgentRequest {
 }
 
 export type AgentEvent =
+  | {
+      type: 'timing';
+      phase: 'native_round' | 'native_readback' | 'table_tool';
+      round: number;
+      durationMs: number;
+    }
   | { type: 'activity'; phase: 'thinking' | 'tool' }
   | { type: 'status'; message: string }
   | { type: 'text'; text: string }

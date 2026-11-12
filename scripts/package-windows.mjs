@@ -156,6 +156,12 @@ for (const [name, license] of [
   ['wpsjs', 'LICENSE'],
   ['esbuild', 'LICENSE.md'],
   ['postject', 'LICENSE'],
+  ['markdown-it', 'LICENSE'],
+  ['linkify-it', 'LICENSE'],
+  ['mdurl', 'LICENSE'],
+  ['punycode.js', 'LICENSE-MIT.txt'],
+  ['uc.micro', 'LICENSE.txt'],
+  ['entities', 'LICENSE'],
 ]) {
   notices.push(
     `${name}\n${await readFile(join(root, 'node_modules', name, license), 'utf8')}`,

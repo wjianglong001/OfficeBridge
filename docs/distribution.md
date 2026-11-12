@@ -2,7 +2,7 @@
 
 ## 交付范围
 
-当前版本 0.12.9 提供 WPS 原生入口包、独立 exe 和 npm 三个入口。独立 `OfficeBridge.exe` 内置 Node.js、桥接代码和 WPS 静态资源，无需安装 Node.js、npm 或下载源码。开发者继续使用 `npm run dev`，也可 `npm run build` 后 `npm start`。
+当前本地测试版本 0.12.10 提供 WPS 原生入口包、独立 exe 和 npm 三个入口。独立 `OfficeBridge.exe` 内置 Node.js、桥接代码和 WPS 静态资源，无需安装 Node.js、npm 或下载源码。开发者继续使用 `npm run dev`，也可 `npm run build` 后 `npm start`。
 
 这些入口使用同一份服务和端口（默认 4318）。exe 默认打开 WPS 安装页面，窗口提示保持运行；关闭窗口或 Ctrl+C 停止服务。加载项安装仍由用户在页面点击完成，不自动修改 WPS 配置。此版是带控制台的便携程序，不是安装向导或托盘程序。
 
@@ -10,7 +10,7 @@
 
 ## WPS 原生入口包
 
-产物为 `release/wps/OfficeBridge-WPS-0.12.9.zip`，构建目录为 `release/wps/0.12.9/WPS/`：
+产物为 `release/wps/OfficeBridge-WPS-0.12.10.zip`，构建目录为 `release/wps/0.12.10/WPS/`：
 
 ```text
 WPS/

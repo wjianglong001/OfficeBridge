@@ -1,6 +1,6 @@
 {
   "name": "office-bridge",
-  "version": "0.12.9",
+  "version": "0.12.10",
   "private": true,
   "license": "MIT",
   "description": "Connect local AI agents to office applications.",
@@ -19,7 +19,7 @@
     "test:exe": "node scripts/smoke-windows.mjs",
     "typecheck": "tsc --noEmit",
     "pretest": "npm run wps:prepare",
-    "test": "tsx --test tests/bridge.test.ts tests/protocol.test.ts tests/analysis.test.ts tests/codex.test.ts tests/table.test.ts tests/actions.test.ts tests/workbuddy.test.ts tests/doubao.test.ts tests/on-demand.test.ts tests/scope-navigation.test.ts tests/continuation.test.ts tests/execution.test.ts tests/agent-diagnostics.test.ts tests/doubao-connection.test.ts tests/run-watchdog.test.ts tests/wps-bootstrap.test.ts",
+    "test": "tsx --test tests/bridge.test.ts tests/protocol.test.ts tests/analysis.test.ts tests/codex.test.ts tests/table.test.ts tests/actions.test.ts tests/workbuddy.test.ts tests/doubao.test.ts tests/on-demand.test.ts tests/scope-navigation.test.ts tests/continuation.test.ts tests/execution.test.ts tests/agent-diagnostics.test.ts tests/doubao-connection.test.ts tests/run-watchdog.test.ts tests/wps-bootstrap.test.ts tests/markdown.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm test && npm run format:check",
@@ -31,8 +31,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
+    "@types/markdown-it": "^14.2.0",
     "@types/node": "^24.19.2",
     "esbuild": "^0.28.2",
+    "markdown-it": "^15.0.3",
     "postject": "^1.0.0-alpha.6",
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
